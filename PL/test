@@ -1,2 +1,27 @@
 (define (factorial n)
   (if (zero? n) 1 (* n (factorial (- n 1)))))
+
+;(define (length x)
+;  (if (list? x) ((if (null? x) 0 (+ 1 (la (cdr x))))))
+;      (error "x no es una lista")))
+
+;(define (member x y)
+;  (if (list? y) (
+;                 if(null? y) #f
+;                   (if(equal? x (car y)) y
+;                      (member x (cdr y))))))
+
+(define (membert x y)
+  (if (list? y) (
+                 cond [(null? y) #f]
+                      [(equal? x (car y)) y]
+                      [else (membert x (cdr y))])))
+
+;(define (reverse x) (if (list? x) (if(null? x) x (append((reverse (cdr x)) (list (car x)))))))
+
+;(define (equal? x y)
+;  (cond [(and (atom? x) (atom? y)) (eq? x y)]
+;        [(or (atom? x) (atom? y)) #f]
+;        [else (and (equal? (car x) (car y)) (equal? (cdr x) (cdr y)))]))
+
+(define (palíndromo x) (equal? (reverse x) x))
