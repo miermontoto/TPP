@@ -207,25 +207,40 @@
 ; copia de Sexp, pero que no contiene ninguna ocurrencia de x
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
+; 1. Base: Sexp es la lista vacía => ()
+; 2. Recurrencia: Sexp no es la lista vacía.
+;      Hipótesis: Se conoce H1 = erase(x, car(Sexp)) y H2 = erase(x, cdr(Sexp))
+;          Tesis: cons(H1, H2)
+(define (erase x Sexp)
+  (cond [(equal? x Sexp) ()]
+        [(or (null? Sexp) (atom? Sexp)) Sexp]
+        [else (cons (erase x (car Sexp)) (erase x (cdr Sexp)))]))
 
 
-
-;(displayln "erase:")
-;(erase '(f) '((a (b c) (f)) (d a (e)) f)) ; => ((a (b c)) (d a (e)) f)
-;(erase 'f '((a (b c) ()) (d a (e)) f))    ; => ((a (b c)) (d a (e)))
+(displayln "erase:")
+(erase '(f) '((a (b c) (f)) (d a (e)) f)) ; => ((a (b c)) (d a (e)) f)
+(erase 'f '((a (b c) ()) (d a (e)) f))    ; => ((a (b c)) (d a (e)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Definir la función ocurrencias2(x, Sexp) que retorna el número de
 ; ocurrencias de la S-expresión x en la S-expresión Sexp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
+; 1. Base: Sexp es igual a x => 1. De lo contrario, si Sexp es átomo o la lista vacía, entonces 0.
+; 2. Recurrencia: Sexp no es átomo, ni la lista vacía, ni igual a x.
+;      Hipótesis: Se conoce H1 = ocurrencias2(x, cdr(Sexp)) y H2 = ocurrencias2(x, car(Sexp)).
+;          Tesis: ocurrencias2(x, Sexp) = H1 + H2;
 
+(define (ocurrencias2 x Sexp)
+  (cond [(equal? x Sexp) 1]
+        [(null? Sexp) 0]
+        [(atom? Sexp) 0]
+        [else (+ (ocurrencias2 x (car Sexp)) (ocurrencias2 x (cdr Sexp)))]))
 
-
-;(displayln "ocurrencias2:")
-;(ocurrencias2 'a '((a b (a)) (a) c))                 ; => 3
-;(ocurrencias2 '(a) '((a b (a)) (a) c))               ; => 2
-;(ocurrencias2 '(0 1) '((1 2 ((0 1))) ((0) 1) (0 1))) ; => 2
+(displayln "ocurrencias2:")
+(ocurrencias2 'a '((a b (a)) (a) c))                 ; => 3
+(ocurrencias2 '(a) '((a b (a)) (a) c))               ; => 2
+(ocurrencias2 '(0 1) '((1 2 ((0 1))) ((0) 1) (0 1))) ; => 2
 
 ;;;------------------------------------------------------------------------
 ;;; EJERCICIOS COMPLEMENTARIOS
@@ -260,7 +275,6 @@
 ;
 
 
-
 ;(displayln "intersection:")
 ;(intersection '((1) (2) (3)) '((2) (5))) ; => ((2))
 ;(intersection '(a f c b) '(z a b c))     ; => (a c b)
@@ -270,10 +284,18 @@
 ; contenida en la S-expresión Sexp 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
+; 1. Base: x es igual a Sexp => #t. De lo contrario, si Sexp es átomo o la lista vacía, #f.
+; 2. Recurrencia: No se cumple ningún caso base.
+;      Hipótesis: Se conoce existe?(x, cdr(Sexp)) = H1 y existe?(x, car(Sexp))
+;          Tesis: H1 OR H2
+(define (existe? x Sexp)
+  (cond [(equal? x Sexp) #t]
+        [(null? Sexp) #f]
+        [(atom? Sexp) #f]
+        [else (or (existe? x (car Sexp)) (existe? x (cdr Sexp)))]))
 
 
-
-;(displayln "existe?")
-;(existe?  'a '((a b (a)) (e) c))     ;=> #t
-;(existe? '(a)  '((a b (a)) (e) c))   ;=> #t
-;(existe? '((a))  '((a b (a)) (e) c)) ;=> #f
+(displayln "existe?")
+(existe?  'a '((a b (a)) (e) c))     ;=> #t
+(existe? '(a)  '((a b (a)) (e) c))   ;=> #t
+(existe? '((a))  '((a b (a)) (e) c)) ;=> #f
