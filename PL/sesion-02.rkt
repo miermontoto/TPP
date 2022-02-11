@@ -212,8 +212,8 @@
 ;      Hipótesis: Se conoce H1 = erase(x, car(Sexp)) y H2 = erase(x, cdr(Sexp))
 ;          Tesis: cons(H1, H2)
 (define (erase x Sexp)
-  (cond [(equal? x Sexp) ()]
-        [(or (null? Sexp) (atom? Sexp)) Sexp]
+  (cond [(or (null? Sexp) (atom? Sexp)) Sexp]
+        [(equal? x (car Sexp)) ()]
         [else (cons (erase x (car Sexp)) (erase x (cdr Sexp)))]))
 
 
@@ -273,11 +273,18 @@
 ; de los dos proporcionados.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
+; 1. Tesis: A es la lista vacía => la intersección es vacía.
+; 2. Recurrencia: A no es la lista vacía.
+;;;    Hipótesis: Se conoce intersection(car(A), B) = H1 y intersection(cdr(A), B) = H2
+;;;        Tesis: intersection(A,B) = append(H1, H2)
+(define (intersection A B)
+  (cond [(null? A) ()]
+        [(atom? A) (if (boolean? (member A B)) () A)]
+        [else (cons (intersection (car A) B) (intersection (cdr A) B))]))
 
-
-;(displayln "intersection:")
-;(intersection '((1) (2) (3)) '((2) (5))) ; => ((2))
-;(intersection '(a f c b) '(z a b c))     ; => (a c b)
+(displayln "intersection:")
+(intersection '((1) (2) (3)) '((2) (5))) ; => ((2))
+(intersection '(a f c b) '(z a b c))     ; => (a c b)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; existe?(x, Sexp) retorna cierto si la S-expresión x está
@@ -287,11 +294,11 @@
 ; 1. Base: x es igual a Sexp => #t. De lo contrario, si Sexp es átomo o la lista vacía, #f.
 ; 2. Recurrencia: No se cumple ningún caso base.
 ;      Hipótesis: Se conoce existe?(x, cdr(Sexp)) = H1 y existe?(x, car(Sexp))
-;          Tesis: H1 OR H2
+;          Tesis: existe?(x, Sexp) = x == car(Sexp) ? #t : H1 OR H
 (define (existe? x Sexp)
-  (cond [(equal? x Sexp) #t]
-        [(null? Sexp) #f]
+  (cond [(null? Sexp) #f]
         [(atom? Sexp) #f]
+        [(equal? x (car Sexp)) #t]
         [else (or (existe? x (car Sexp)) (existe? x (cdr Sexp)))]))
 
 
