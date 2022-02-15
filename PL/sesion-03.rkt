@@ -94,9 +94,9 @@
 ;  1. Base       : Extrae((), Filtro, Formato) = ()
 ;  2. Recurrencia: Datos no es () => Datos = cons(car(Datos), cdr(Datos))
 ;       Hipótesis: se conoce Extrae(cdr(Datos), Filtro, Formato) = H
-;       Tesis    : Extrae(Datos) = si Filtro(car(Datos))
-;                                  entonces cons(Formato(car(Datos)), H)
-;                                  sino H
+;       Tesis    : Extrae(Datos, Filtro, Formato) = si Filtro(car(Datos))
+;                                                   entonces cons(Formato(car(Datos)), H)
+;                                                   sino H
 
 (define (Extrae Datos Filtro Formato)
   (cond
@@ -129,28 +129,28 @@
 ;; requeriría un procesamiento posterior de éstos (el formateo).
 
 ;b) La lista de nombres completos de todos
-
-
+(Extrae Datos (lambda(x) #t) get-nombre-completo)
+(displayln "% --- %")
 
 ;c) Los nombres de todas las mujeres que trabajan
-
-
+(Extrae Datos (lambda(x) (and (eq? (get-genero x) 'M) (trabaja? x))) get-nombre)
+(displayln "% --- %")
 
 ;d) Los nombres completos de todos los que han estudiado INFORMATICA
-
-
+(Extrae Datos (lambda(x) (member 'INFORMATICA (get-estudios x))) get-nombre-completo)
+(displayln "% --- %")
 
 ;e) Los pares (género edad) de todas las personas sin estudios
-
-
+(map cons (Extrae Datos (lambda(x) (null? (get-estudios x))) get-genero) (Extrae Datos (lambda(x) (null? (get-estudios x))) get-edad))
+(displayln "% --- %")
 
 ;f) La edad de todos los INFORMATICOS
-
-
+(Extrae Datos (lambda(x) (member 'INFORMATICA (get-estudios x))) get-edad)
+(displayln "% --- %")
 
 ;g) La lista de nombres completos de todas las personas sin trabajo
-
-
+(Extrae Datos (lambda(x) (not (trabaja? x))) get-nombre-completo)
+(displayln "% --- %")
 
 
 ;; ----------------------------------------------------------
@@ -191,40 +191,54 @@
 (define informaticos
   (gen-filtro (lambda (p) (get-estudios p)) member 'INFORMATICA))
 
-(Extrae Datos informaticos get-nombre)
+;(Extrae Datos informaticos get-nombre)
 
 ;a) Los nombres de los adultos
-
-
+(define adultos
+  (gen-filtro (lambda(x) (get-edad x)) < 17))
+(Extrae Datos adultos get-nombre)
+(displayln "% --- %")
 
 
 ;b) La lista de nombres completos de todos
-
+(define todos
+  (gen-filtro (lambda(x) #t) eq? #t))
+(Extrae Datos todos get-nombre-completo)
+(displayln "% --- %")
 
 
 
 ;c) Los nombres de todas las mujeres que trabajan
-
-
+(define mujeres-que-trabajan
+  (gen-filtro (lambda(x) (and (trabaja? x) (get-genero x))) eq? 'M))
+(Extrae Datos mujeres-que-trabajan get-nombre)
+(displayln "% --- %")
 
 
 ;d) Los nombres completos de todos los que han estudiado INFORMATICA
-
-
+(Extrae Datos informaticos get-nombre-completo)
+(displayln "% --- %")
 
 
 ;e) Los pares (género edad) de todas las personas sin estudios
-
+(define sin-estudios
+  (gen-filtro (lambda(x) (null? (get-estudios x))) eq? #t))
+(map cons (Extrae Datos sin-estudios get-genero) (Extrae Datos sin-estudios get-edad))
+(displayln "% --- %")
 
 
 
 ;f) La edad de todos los INFORMATICOS
-
+(Extrae Datos informaticos get-edad)
+(displayln "% --- %")
 
 
 
 ;g) La lista de nombres completos de todas las personas sin trabajo
-
+(define sin-trabajo
+  (gen-filtro (lambda(x) (trabaja? x)) eq? #f))
+(Extrae Datos sin-trabajo get-nombre-completo)
+(displayln "% --- %")
 
 
 
@@ -243,25 +257,28 @@
 ;; dados por la lista de sus dígitos y que tienen un nombre asociado,
 ;; utiliza la función filter para obtener los números que se solicitan.
 
+
 ;a) Obtener todos los números con más de 3 dígitos
 ;   ((n2 (3 4 9 0 1)) (n3 (3 0 3 4)))
-
-
+(filter (lambda(x) (> (length (cadr x)) 3)) numeros)
+(displayln "% --- %")
 
 ;b) Obtener todos los números que tengan un siete
 ;   ((n1 (3 7 3)) (n4 (7)))
-
+(filter (lambda(x) (member '7 (cadr x))) numeros)
+(displayln "% --- %")
 
 
 ;c) Obtener todos los números que tengan como primer dígito un 3
 ;   ((n1 (3 7 3)) (n2 (3 4 9 0 1)) (n3 (3 0 3 4)))
-
+(filter (lambda(x) (eq? '3 (caadr x))) numeros)
+(displayln "% --- %")
 
 
 ;d) Obtener todos los números cuya suma de dígitos sea menor que 12
 ;   ((n3 (3 0 3 4)) (n4 (7)))
-
-
+(filter (lambda(x) (> 12 (apply + (cadr x)))) numeros)
+(displayln "% --- %")
 
 
 ;------------------------------------------------------
@@ -269,11 +286,12 @@
 ; retorna el número de repeticiones de x en la lista l
 ;------------------------------------------------------
 ;
+(define (frecuency1 x l)
+  (length (filter (lambda(n) (equal? x n)) l)))
 
 
-
-;(display "frecuency: ")
-;(frecuency1 '(a) '(a b (a) a d (a))) ; => 2
+(display "frecuency: ")
+(frecuency1 '(a) '(a b (a) a d (a))) ; => 2
 
 ;------------------------------------------------------
 ; Define la función recursiva filterec(f, L) que, dada
@@ -281,11 +299,19 @@
 ; retorna la lista con los elementos de L que cumplen f
 ;-------------------------------------------------------
 ;
+; 1. Base: L es la lista vacía => ()
+; 2. Recurrencia: L NO es la lista vacía
+;;;    Hipótesis: Conocido filterec(f, cdr(L)) = H
+;;;        Tesis: Si car(L) cumple f => cons(car(L), H)
+;;;;;             De lo contrario, H
+(define (filterec f L)
+  (cond [(null? L) L]
+        [(f (car L)) (cons (car L) (filterec f (cdr L)))]
+        [else (filterec f (cdr L))]))
 
 
-
-;(display "filtered: ")
-;(filterec list? '(1 (2) ((a)) 3))  ; => ((2) ((a)))
+(display "filtered: ")
+(filterec list? '(1 (2) ((a)) 3))  ; => ((2) ((a)))
 
 ;------------------------------------------------------
 ; Define la función recursiva for-all(f, L) que retorna
@@ -293,11 +319,17 @@
 ; de los elementos de la lista
 ;-------------------------------------------------------
 ;
+; 1. Base: L es la lista vacía => L
+; 2. Recurrencia: L no es la lista vacía.
+;;;    Hipótesis: Conocida lista resultante de aplicar f a cdr(L) = H
+;;;        Tesis: cons((f(car(L))), H)
+(define (for-all f L)
+  (if (null? L) L
+      (cons (f (car L)) (for-all f (cdr L)))))
 
 
-
-;(display "for-all: ")
-;(for-all cadr '((a b) ((a) c) (d (e)))) ;  => (b c (e))
+(display "for-all: ")
+(for-all cadr '((a b) ((a) c) (d (e)))) ;  => (b c (e))
 
 ;----------------------------------------------------------------------
 ; Utiliza las funciones dadas al principio, que extraen información
@@ -312,7 +344,6 @@
 ; ha de verificarse una condición relevante por cada campo.
 ;----------------------------------------------------------------------
 ;
-
 
 
 
