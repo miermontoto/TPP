@@ -344,12 +344,13 @@
 ; ha de verificarse una condición relevante por cada campo.
 ;----------------------------------------------------------------------
 ;
+(define (persona? p)
+  (and (and (and (and (and (and (and (equal? 7 (length p)) (list? (get-estudios p))) (map string? (get-apellidos p))) (boolean? (trabaja? p))) (or (equal? 'V (get-genero p)) (equal? 'M (get-genero p)))) (number? (get-edad p))) (list? (get-apellidos p))) (string? (get-nombre p))))
 
 
-
-;(persona? '(MARIA LUZ DIVINA 23 M (INFORMATICA) #t))    ; => #t
-;(persona? '(MARIA LUZ DIVINA 2 3 M (INFORMATICA) #t))   ; => #f
-;(persona? '(MARIA (LUZ DIVINA) 23 M (INFORMATICA) #t))  ; => #f
-;(persona? '(MARIA LUZ DIVINA 23 M INFORMATICA #t))      ; => #f
-;(persona? '(MARIA LUZ DIVINA 23 H (INFORMATICA) #t))    ; => #f
+(persona? '(MARIA LUZ DIVINA 23 M (INFORMATICA) #t))    ; => #t
+(persona? '(MARIA LUZ DIVINA 2 3 M (INFORMATICA) #t))   ; => #f
+(persona? '(MARIA (LUZ DIVINA) 23 M (INFORMATICA) #t))  ; => #f
+(persona? '(MARIA LUZ DIVINA 23 M INFORMATICA #t))      ; => #f
+(persona? '(MARIA LUZ DIVINA 23 H (INFORMATICA) #t))    ; => #f
 
