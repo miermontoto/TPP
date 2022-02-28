@@ -1,3 +1,10 @@
+; A un curry se le pasa una función que espera n argumentos y se le pasan los i primeros.
+; Esa función currificada será funcionalmente igual, pero pedirá n-i argumentos.
+; curry devuelve y reemplaza a una función lambda
+
+
+
+
 ; Scheme no tiene currificación de forma nativa
 ; Función curry del módulo "racket/function"
 
@@ -139,11 +146,15 @@
 ;; retorna la mayor longitud de las listas que recibe como argumentos. 
 ;;-------------------------------------------------------------------------
 
+(define maxLength
+  (lambda X (apply max (map length X))))
+
+(define (maxLength2 . listas)
+  (apply max (map length listas)))
 
 
-
-;(display "maxLength: ")
-;(maxLength '(a (b c)) '(1 2 3 4) '((a b) (c d) e (f) g)) ;=> 5
+(display "maxLength: ")
+(maxLength '(a (b c)) '(1 2 3 4) '((a b) (c d) e (f) g)) ;=> 5
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Define mediante FOS la función de parámetros variables
@@ -151,13 +162,14 @@
 ;; que retorna la lista: (filter(f, l1) filter(f,l2) ...)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define filter-for
+  (lambda (f . X) (map (curry filter f) X)))
 
 
 
-
-;(displayln "filter:")
-;(filter-for atom? '(1 (2) 3) '(9 (2 3)) '(0 1 6))      ; => ((1 3) (9) (0 1 6))
-;(filter-for number? '(a (b) 3) '(d (2 e)) '(a 1 (b)))  ; => ((3) () (1))
+(displayln "filter:")
+(filter-for atom? '(1 (2) 3) '(9 (2 3)) '(0 1 6))      ; => ((1 3) (9) (0 1 6))
+(filter-for number? '(a (b) 3) '(d (2 e)) '(a 1 (b)))  ; => ((3) () (1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; A continuación se define el símbolo Datos cuya evaluación proporciona
@@ -182,20 +194,23 @@
 ;; Definir la función info(key, p) que retorna una lista con el valor asociado
 ;; a la clave key para una persona p dada.
 
+(define (info key p)
+  (cdar (filter (lambda(l) (equal? key (car l))) p)))
 
 
-
-;(display "info: ")
-;(info 'apellidos (cadr Datos))  ; => (LUZ DIVINA)
+(display "info: ")
+(info 'apellidos (cadr Datos))  ; => (LUZ DIVINA)
+(info 'edad (cadr Datos)) ; => (23)
 
 ;; Define la funcion buscar(key datos) que retorna la lista con la información de
 ;; clave dada para todas las personas de datos
 
+(define (buscar key datos)
+  (map (curry info key) datos))
 
 
-
-;(display "buscar: ")
-;(buscar 'nombre Datos)  ; => ((LUIS) (MARIA) (ADOLFO) (ANA) (JOSE LUIS) (JOSHUA) (MARUJA) (GUILLERMO))
+(display "buscar: ")
+(buscar 'nombre Datos)  ; => ((LUIS) (MARIA) (ADOLFO) (ANA) (JOSE LUIS) (JOSHUA) (MARUJA) (GUILLERMO))
 
 ;; Define la función buscar+(l-keys, datos) que retorna la lista con la información
 ;; correspondiente a las claves dadas en la lista l-keys para todas las personas de
@@ -205,12 +220,13 @@
 ;; posteriormente, define la función buscar+(l-keys, datos) aplicando la primera a todas las
 ;; personas de datos
 
+(define (buscar+ l-keys datos)
+  (map (lambda(l) (apply append (map (lambda(x) (info x l)) l-keys))) datos))
 
 
-
-;(displayln "buscar+:")
-;(buscar+ '(nombre apellidos) Datos) ;=> ((LUIS GARCIA PEREZ) (MARIA LUZ DIVINA) (ADOLFO MONTES PELADOS)...)
-;(buscar+ '(nombre sexo edad) Datos) ;=> ((LUIS V 26) (MARIA M 23) (ADOLFO V 24) (ANA M 22) (JOSE V 36)...)
+(displayln "buscar+:")
+(buscar+ '(nombre apellidos) Datos) ;=> ((LUIS GARCIA PEREZ) (MARIA LUZ DIVINA) (ADOLFO MONTES PELADOS)...)
+(buscar+ '(nombre sexo edad) Datos) ;=> ((LUIS V 26) (MARIA M 23) (ADOLFO V 24) (ANA M 22) (JOSE V 36)...)
 
 ;;;------------------------------------------------------------------------
 ;;; EJERCICIOS COMPLEMENTARIOS
@@ -224,10 +240,11 @@
 ;; elementos de la lista l según la función de ordenación f
 
 
+(define (presentar datos orden_claves)
+  ())
 
-
-;(displayln "presentar:")
-;(presentar Datos '(apellidos nombre edad sexo estudios en_activo))
+(displayln "presentar:")
+(presentar Datos '(apellidos nombre edad sexo estudios en_activo))
 
 ;; Utilizar FOS y la función presentar para obtener la información de
 ;; las personas tal y cómo se indica, prescindiendo de la clave, pero
@@ -244,7 +261,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Define mediante FOS la función change-all(l, u, v) que retorna
+;; Define mediante FOS la función change-all(l, u,s v) que retorna
 ;; la lista resultante de cambiar cada elemento u de l por v.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
