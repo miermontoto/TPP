@@ -1,12 +1,13 @@
 import java.util.concurrent.Semaphore;
 
-public class EjercicioConExclusion implements Runnable {
+public class EjercicioExclusiónSemáforo implements Runnable {
 
-    private Semaphore mutex = new Semaphore(1);
+    private Semaphore mutex;
     private volatile int n;
 
-    public EjercicioConExclusion() {
+    public EjercicioExclusiónSemáforo() {
         this.n = 0;
+        mutex = new Semaphore(1);
     }
 
     public void crearHilos() {
@@ -34,12 +35,12 @@ public class EjercicioConExclusion implements Runnable {
         }
     }
     public static void main(String[] args) throws InterruptedException {
-        EjercicioConExclusion e = new EjercicioConExclusion();
+        EjercicioExclusiónSemáforo e = new EjercicioExclusiónSemáforo();
 
         e.crearHilos();
 
         while(Thread.activeCount() > 1) {
-            Thread.sleep(10);
+            Thread.sleep(5);
         }
 
         System.out.println("El valor de n es: " + e.value());
