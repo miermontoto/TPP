@@ -2,12 +2,12 @@ import java.util.concurrent.Semaphore;
 
 public class EjercicioExclusiónSync implements Runnable {
 
-    private Semaphore mutex;
     private volatile int n;
+    private volatile Object mutex;
 
     public EjercicioExclusiónSync() {
         this.n = 0;
-        mutex = new Semaphore(1);
+        mutex = new Object();
     }
 
     public void crearHilos() {
@@ -24,13 +24,9 @@ public class EjercicioExclusiónSync implements Runnable {
     @Override
     public void run() {
         for (int i = 0; i < 10000; i++) {
-            try {
-                mutex.acquire(); // P(mutex)
+            synchronized(mutex) {
                 n++;
                 n--;
-                mutex.release(); // V(mutex)
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
         }
     }
