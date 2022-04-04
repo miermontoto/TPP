@@ -13,6 +13,17 @@ public class EjercicioMáquinaDiscos {
         numLastDiscosC = 0;
         alturaLastDiscosC = 0;
     }
+    /**
+     * Constructor copia de la clase
+     * @param x
+     */
+    public EjercicioMáquinaDiscos(EjercicioMáquinaDiscos x) {
+        estado = x.estado;
+        altura = x.altura;
+        numDiscos = x.numDiscos;
+        numLastDiscosC = x.numLastDiscosC;
+        alturaLastDiscosC = x.alturaLastDiscosC;
+    }
 
     /**
      * Método de ejemplo "apilaA(x)"
