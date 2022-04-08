@@ -1,14 +1,15 @@
 public class Banco {
     
     /**
-     * nombre:   | cer | Aop | Bop | Acl | Bcl |
-     * estados:  |  0  |  1  |  2  |  3  |  4  |
-     * abrirA    |  1  | ANP | ANP | ANP |  1  |
-     * abrirB    |  2  | ANP | ANP |  2  | ANP |
-     * cerrarA   |  -  |  3  |  -  |  -  |  -  |
-     * cerrarB   |
-     * alarmaOn  |
-     * alarmaOff |
+     * Grafo de estados:
+     * nombre    | cer | Aop | Bop | Acl | Bcl | fro |
+     * abrirA    | Aop | ANP | ANP | ANP | Aop | ANP |
+     * abrirB    | Bop | ANP | ANP | Bop | ANP | ANP |
+     * cerrarA   |  -  | Acl |  -  |  -  |  -  |  -  |
+     * cerrarB   |  -  |  -  | Bop |  -  |  -  |  -  |
+     * alarmaOn  | fro | fro | fro | fro | fro | ANP |
+     * alarmaOff | ANP | ANP | ANP | ANP | ANP | cer |
+     * toggleAl  | fro | fro | fro | fro | fro | cer |
      */
     private int estado;
 
