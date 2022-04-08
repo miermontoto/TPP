@@ -1,3 +1,6 @@
+*.hmtl
+*.css
+*.js
 doc/
 *.log
 *.class
