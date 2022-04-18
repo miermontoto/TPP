@@ -135,7 +135,10 @@ public class Servicio implements JuegoBarcos {
 
 	/**
 	 * Cambia el estado del OOS del jugador según haya hecho blanco
-	 * o no en el último tiro.
+	 * o no en el último tiro. <p>
+	 * Si se ha hecho blanco, se mueve el estado hacia delante una posición.
+	 * En el caso de estar en el tercer turno consecutivo, se pierde el turno. <p>
+	 * Si no se ha hecho blanco, se pierde el turno.
 	 * @param blanco {@code true} si el tiro ha alcanzado un barco
 	 * del oponente
 	 */
@@ -161,6 +164,17 @@ public class Servicio implements JuegoBarcos {
 		return this.barcosRestantes;
 	}
 
+	/**
+	 * Método que empareja a dos jugadores y comienza la partida.
+	 * El jugador que invoca a este método es el primero en jugar. <p>
+	 * <h3> Información de estados </h3>
+	 * <ul> <li> 0: ANP </li>
+	 * <li> 1: 1/2 </li>
+	 * <li> 2: ANP </li>	
+	 * <li> 3: ANP </li>
+	 * <li> 4: ANP </li>
+	 * <li> 5: ANP </li> </ul>
+	 */
 	@Override
 	public boolean iniciarJuego() throws AccionNoPermitida {
 		// Si no se está en el estado 1, no se puede iniciar el juego.
@@ -184,6 +198,11 @@ public class Servicio implements JuegoBarcos {
 		return estado == 2;
 	}
 
+	/**
+	 * Método que informa sobre el estado de la partida una vez comenzada.
+	 * @return {@code 0}, {@code 1} o {@code JuegoBarcos.FINAL_JUEGO} si el jugador
+	 * no tiene el turno, si lo tiene o se ha terminado la partida respectivamente.
+	 */
 	@Override
 	public int turno() throws AccionNoPermitida {
 		if(this.estado < 2) throw new AccionNoPermitida("turno");

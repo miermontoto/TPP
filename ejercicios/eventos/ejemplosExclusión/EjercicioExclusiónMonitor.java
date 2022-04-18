@@ -18,7 +18,7 @@ public class EjercicioExlcusiónMonitor implements Runnable {
     }
 
     @Override
-    public void run() {
+    public synchronized void run() {
         for (int i = 0; i < 10000; i++) {
             // sección crítica
             n++;

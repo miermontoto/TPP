@@ -5,18 +5,23 @@ import lib.ChannelException;
 import lib.CommServer;
 import optional.Trace;
 
-public class Servidor_Varios_Clientes {
+public class Servidor {
 	
 	private static void registrarOperaciones(CommServer com) {		
 		// registro de las operaciones de servicio
-		com.addFunction("saluda",
-				(o, x) -> ((SaludadorOOS)o).saluda());
-		com.addFunction("usuariosConectados",
-				(o, x) -> ((SaludadorOOS)o).usuariosConectados());
-		com.addAction("cambiaSaludo",
-				(o, x) -> ((SaludadorOOS)o).cambiaSaludo((String)x[0]));
-		com.addAction("reset",
-				(o, x) -> ((SaludadorOOS)o).reset(), true);
+		com.addAction("colocarBarco",
+				(o, x) -> ((Servicio)o).colocarBarco((String) x[0]));
+		com.addFunction("obtenerBarcos",
+				(o, x) -> ((Servicio)o).tableroBarcos());
+		com.addFunction("obtenerTiros",
+				(o, x) -> ((Servicio)o).tableroTiros());
+		com.addFunction("barcosPorColocar",
+				(o, x) -> ((Servicio)o).barcosPorColocar());
+		com.addFunction("iniciarJuego",
+				(o, x) -> ((Servicio)o).iniciarJuego());
+		com.addFunction("turno",
+				(o, x) -> ((Servicio)o).turno());
+				
 	} // registrarOperaciones
 
 	public static void main(String[] args) {

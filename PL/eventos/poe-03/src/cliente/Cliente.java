@@ -1,6 +1,7 @@
 package cliente;
 
 import java.io.IOException;
+import java.util.List;
 
 import lib.ChannelException;
 import lib.CommClient;
@@ -12,20 +13,26 @@ import comun.AccionNoPermitida;
 public class Cliente {
 
 	private static CommClient com;	// canal de comunicación del cliente (singleton)
-	private static Menu m;			// interfaz (singleton)
-	
-	private static void saludame() throws IOException, ChannelException {
-		// Crear mensaje a enviar.
-		ProtocolMessages peticion =
-				new ProtocolMessages("saluda");
-		// Enviar evento al servidor.
+	private static Menu m; // ChoiceMenu del cliente.
+	private static Menu mo; // ChoiceMenu de barcos por colocar.
+
+	private static void colocarBarco(int b) throws IOException, ChannelException {
+
+		// Se solicita por consola la posición del barco a colocar.
+		System.out.print("Introduzca las coordenadas del barco: ");
+		String coords = m.input().nextLine();
+		
+		// Se crea el mensaje a enviar.
+		ProtocolMessages peticion = new ProtocolMessages("colocarBarco", coords);
+
+		// Se envía el mensaje al servidor.
 		com.sendEvent(peticion);
+		
+		// Esperar por la respuesta.
 		try {
-			// Esperar respuesta.
 			ProtocolMessages respuesta = com.waitReply();
 			// Procesar respuesta.
-			Object resultado = com.processReply(respuesta);
-			System.out.println(resultado);
+			Object psbexp = com.processReply(respuesta);
 		} catch (ClassNotFoundException | UnknownOperation e) {
 			System.err.printf("Recibido del servidor: %s\n",
 					e.getMessage());
@@ -36,135 +43,53 @@ public class Cliente {
 					e.getMessage());
 		}
 		
-	} // saludame
-	
-	private static void numUsuarios() throws IOException, ChannelException {
-		// crear mensaje a enviar
-		ProtocolMessages peticion =
-				new ProtocolMessages("usuariosConectados");
-		// enviar mensaje de solicitud al servidor
-		com.sendEvent(peticion);
-		try {
-			// esperar respuesta, excepto si la petición es oneway
-			ProtocolMessages respuesta = com.waitReply();
-			// procesar respuesta o excepción
-			Object resultado = com.processReply(respuesta);
-			System.out.printf("Usuarios conectados: %s\n", resultado);
-		} catch (ClassNotFoundException e) {
-			System.err.printf("Recibido del servidor: %s\n",
-					e.getMessage());
-		} catch (UnknownOperation e) {
-			System.err.printf("Recibido del servidor: %s\n",
-					e.getMessage());
-		} catch (IOException | ChannelException e) {
-			throw e;
-		} catch (Exception e) {
-			System.err.printf("%s: %s\n", e.getClass().getSimpleName(),
-					e.getMessage());
-		}
+	} // colocarBarco
 
-	} // numUsuarios
+	/**
+	 * Método que limpia la salida.
+	 */
+	private static void limpiar() {
+		System.out.print("\033[H\033[2J");
+	}
 
-	private static void randomizarSaludo() throws IOException, ChannelException {
-		String saludo = "Hola ";
-		// randomizar cadena de 8 caracteres de largo.;
-		for (int i = 0; i < 8; i++) saludo += (char) (Math.random() * 26 + 'a');
-		// Imprimir el nuevo saludo.
-		System.out.printf("Saludo: %s\n", saludo);
-		// crear mensaje a enviar
-		ProtocolMessages peticion =
-				new ProtocolMessages("cambiaSaludo", saludo);
-		// enviar mensaje de solicitud al servidor
-		com.sendEvent(peticion);
-		try {
-			// esperar respuesta, excepto si la petición es oneway
-			ProtocolMessages respuesta = com.waitReply();
-			// procesar respuesta o excepción
-			Object resultado = com.processReply(respuesta);
-			System.out.printf("Saludo randomizado: %s\n", resultado);
-		} catch (ClassNotFoundException e) {
-			System.err.printf("Recibido del servidor: %s\n",
-					e.getMessage());
-		} catch (UnknownOperation e) {
-			System.err.printf("Recibido del servidor: %s\n",
-					e.getMessage());
-		} catch (IOException | ChannelException e) {
-			System.err.printf("%s: %s\n", e.getClass().getSimpleName(),
-					e.getMessage());
-		} catch (Exception e) {
-			System.err.printf("%s: %s\n", e.getClass().getSimpleName(),
-					e.getMessage());
-		}
+	/**
+	 * Método que devuelve la cantidad de barcos que quedan por colocar y
+	 * actualiza el ChoiceMenu de barcos por colocar.
+	 * @return la cantidad de barcos que quedan por colocar.
+	 * @throws Exception
+	 */
+	private static int barcosPorColocar() {
+		mo = new Menu("Barcos disponibles", "Seleccione un barco: ");
+			
+				// Obtener lista de barcos disponibles que faltan por colocar.
+				ProtocolMessages peticiónLista = new ProtocolMessages("barcosPorColocar");
 
-	} // randomizarSaludo
-
-	private static void cambiandoSaludo()
-			throws IOException, ChannelException {
-		// Implementar esta operación: el texto del nuevo saludo deberá
-		// solicitarse por teclado y tratarse convenientemente todas las
-		// excepciones. Sólo se llevarán al main las excepciones críticas
-		// IOException y ChannelException para dar un mensaje de error y
-		// parar el cliente.
-
-		// Se solicita por teclado el texto del nuevo saludo.
-		System.out.print("Introduzca el nuevo saludo: ");
-		String saludo = m.input().nextLine();
-		
-		// Se crea el mensaje a enviar.
-		ProtocolMessages peticion =
-				new ProtocolMessages("cambiaSaludo", saludo);
-		// Se envía el mensaje al servidor.
-		com.sendEvent(peticion);
-		// Se espera la respuesta del servidor.
-		try {
-			ProtocolMessages respuesta = com.waitReply();
-			// Se procesa la respuesta o excepción.
-			Object resultado = com.processReply(respuesta);
-			System.out.printf("Saludo cambiado: %s\n", resultado);
-		} catch (ClassNotFoundException e) {
-			System.err.printf("Recibido del servidor: %s\n",
-					e.getMessage());
-		} catch (UnknownOperation e) {
-			System.err.printf("Recibido del servidor: %s\n",
-					e.getMessage());
-		} catch (IOException | ChannelException e) {
-			throw e;
-		} catch (AccionNoPermitida e) {
-			System.err.println("Acción no permitida");
-		} catch (Exception e) {
-			System.err.printf("%s: %s\n", e.getClass().getSimpleName(),
-					e.getMessage());
-		}
-		// Se muestra el nuevo saludo.
-		System.out.printf("Saludo: %s\n", saludo);
-		
-	} // cambiandoSaludo
-	
-	private static void msgReset()
-			throws IOException, ChannelException {
-		// crear el mensaje a enviar al servidor
-		ProtocolMessages peticion = new ProtocolMessages("reset");
-		// enviar el mensaje de solicitud al servidor
-		// petición 'oneway', sin respuesta
-		com.sendEvent(peticion);	
-	} // msgReset
-
-	public static void interfazCliente() {
-		// crea el menú m
-    	m = new Menu("\nSaludador", "Opción ? ");
-    	
-    	// añadir al menú las opciones y la función anónima
-		m.add("Saludar", () -> saludame());
-		m.add("Número de usuarios", () -> numUsuarios());
-		m.add("Cambiar saludo", () -> cambiandoSaludo());
-		m.add("Reset", () -> msgReset());
-		m.add("Randomizar saludo", () -> randomizarSaludo());
-	}	
+				// Enviar evento al servidor.
+				try {
+					com.sendEvent(peticiónLista);
+				} catch (IOException | ChannelException e) {
+					System.err.printf("%s: %s\n", e.getClass().getSimpleName(),
+							e.getMessage());
+				}
+				int length = 0;
+				try {
+					// Esperar respuesta.
+					ProtocolMessages respuesta = com.waitReply();
+					// Procesar respuesta.
+					List<Integer> resultado = (List<Integer>) com.processReply(respuesta);
+					// Mostrar lista de barcos disponibles.
+					for(int b : resultado) mo.add("Barco de tamaño " + b, b);
+					length = mo.getInteger();
+				} catch(Exception e) {
+					System.err.printf("Recibido del servidor: %s\n",
+							e.getMessage());
+				}
+				return length;
+	}
 	
     public static void main(String[] args) {
-		// 1. Crear el canal de comunicación y establecer la
-		// conexión con el servicio por defecto en localhost
-		try {
+
+		try { // 1. Crear el canal de comunicación
 			com = new CommClient();
 		} catch (IOException | ChannelException e) {
 			System.err.printf("%s: %s\n", e.getClass().getSimpleName(),
@@ -172,25 +97,50 @@ public class Cliente {
 			System.exit(1);
 		}
 		
-		// 1.1. Activar el registro de mensajes del cliente
-		try {
+		try { // 1.1. Activar el registro de mensajes del cliente
 			com.activateMessageLog();
 		} catch (ChannelException e) {
 			System.err.printf("%s: %s\n", e.getClass().getSimpleName(),
 					e.getMessage());
 			System.exit(1);
 		}
-
 		
+		
+		try { // Colocar todos los barcos disponibles.
+			while(barcosPorColocar() != 0) colocarBarco(mo.getInteger());
+		} catch (ChannelException | IOException e1) {
+			e1.printStackTrace();
+		}
 		
 
 		
 		try {
 			// 2. Crear la interfaz
-			interfazCliente();
+			// crea el menú m
+	    	m = new Menu("\nBattleship", "Opción: ");
+	    	
 
 			// 3. Lanzar eventos mediante la interfaz
-			m.run();
+			do {
+				// Imprimir el tablero.
+
+				ProtocolMessages tablero = new ProtocolMessages("obtenerBarcos");
+				com.sendEvent(tablero);
+
+				try {
+					ProtocolMessages respuesta = com.waitReply();
+					Object restablero = com.processReply(respuesta);
+					System.out.println(restablero);
+				} catch (ClassNotFoundException | UnknownOperation e) {
+					System.err.printf("Recibido del servidor: %s\n",
+							e.getMessage());
+				} catch (IOException | ChannelException e) {
+					throw e;
+				} catch (Exception e) {
+					System.err.printf("%s: %s\n", e.getClass().getSimpleName(),
+							e.getMessage());
+				}
+			} while (m.runSelection());
 		} catch (ChannelException | IOException e) {
 			System.err.printf("%s: %s\n", e.getClass().getSimpleName(),
 					e.getMessage());
