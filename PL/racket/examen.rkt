@@ -1,4 +1,5 @@
-(require mzlib/compat racket/function)
+#lang s-exp lang/plt-pretty-big
+(require racket/function)
 
 ;-------------
 ; Ejercicio 1
@@ -106,6 +107,14 @@
 ;
 ; donde cdar(ll) es la lista que contiene los valores de la sublista lnum-n
 ; y caar(ll) es el nombre de la sublista lnum-n.
+(define (positive-adds ll)
+  (cond [(null? ll) ()]
+        [else
+         (let ([suma (apply + (cdar ll))])
+           (if (positive? suma)
+               (cons (caar ll) (positive-adds (cdr ll)))
+               (positive-adds (cdr ll))))]))
+
 (define (sumas-positivas ll)
   (if (null? ll) ll
       (let ([H (sumas-positivas (cdr ll))] [suma (curry apply +)])
@@ -113,7 +122,8 @@
 
 
 (display "sumas-positivas(datos-con-nombre): ")
-(sumas-positivas datos-con-nombre)
+(display (sumas-positivas datos-con-nombre))
+(display (positive-adds datos-con-nombre))
 (displayln "")
 
 ;-------------
@@ -121,7 +131,7 @@
 ;-------------
 
 
-(define (take n l)
+(define (take2 n l)
   (letrec ([t (lambda(n l)
             (if (zero? n) ()
                 (cons (car l) (t (- n 1) (cdr l)))))])
@@ -135,14 +145,14 @@
 
 
 (displayln "take(n, l) con comprobación argumentos:") ; se han añadido comprobaciones adicionales.
-(take '(1 2 3 4) 3)
-;(take 3.4 '(a (b c) d (e) f))
-;(take -2.7 '(a (b c) d (e) f))
-(take 6 '(a (b c) d (e) f))
-;(take pi '(a (b c) d (e) f))
-;(take -1 '(a (b c) d (e) f))
-;(take 1 ())
-;(take 2 4)
-(take 3 '(a (b c) d (e) f))
-;(take 0 ())
+(take2 '(1 2 3 4) 3)
+;(take2 3.4 '(a (b c) d (e) f))
+;(take2 -2.7 '(a (b c) d (e) f))
+(take2 6 '(a (b c) d (e) f))
+;(take2 pi '(a (b c) d (e) f))
+;(take2 -1 '(a (b c) d (e) f))
+;(take2 1 ())
+;(take2 2 4)
+(take2 3 '(a (b c) d (e) f))
+;(take2 0 ())
 
