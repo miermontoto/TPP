@@ -1,0 +1,9 @@
+{
+    "java.project.referencedLibraries": {
+        "include": [
+            "lib/**/*.jar",
+            "componentes.jar",
+            "/home/under/uo/y2t2/Paradigmas/PL/eventos/poe-01/POE_library.jar"
+        ]
+    }
+}

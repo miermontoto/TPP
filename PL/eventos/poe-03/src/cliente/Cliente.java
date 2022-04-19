@@ -25,7 +25,7 @@ public class Cliente {
 		// Se crea el mensaje a enviar.
 		ProtocolMessages peticion = new ProtocolMessages("colocarBarco", coords);
 
-		// Se envía el mensaje al servidor.
+		// Se envía el mensaje aDPOl servidor.
 		com.sendEvent(peticion);
 		
 		// Esperar por la respuesta.
