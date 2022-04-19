@@ -3,16 +3,12 @@ package cliente;
 import java.io.IOException;
 import java.util.List;
 
-import comun.AccionNoPermitida;
 import lib.ChannelException;
 import lib.CommClient;
 import lib.Menu;
 import lib.ProtocolMessages;
-import comun.AccionNoPermitida;
 
 public class Cliente {
-
-	private List<Integer> bpc;
 
 	private static CommClient com;	// canal de comunicación del cliente (singleton)
 	private static Menu m; // ChoiceMenu del cliente.
