@@ -6,8 +6,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="/home/JuanMier/uo/y2t2/Paradigmas/PL/eventos/poe-03/componentes.jar"/>
-	<classpathentry kind="lib" path="/home/JuanMier/uo/y2t2/Paradigmas/PL/eventos/poe-01/POE_library.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/componentes.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/POE_library.jar"/>
 	<classpathentry kind="output" path="bin"/>
