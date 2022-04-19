@@ -3,14 +3,16 @@ package cliente;
 import java.io.IOException;
 import java.util.List;
 
+import comun.AccionNoPermitida;
 import lib.ChannelException;
 import lib.CommClient;
 import lib.Menu;
 import lib.ProtocolMessages;
-import lib.UnknownOperation;
 import comun.AccionNoPermitida;
 
 public class Cliente {
+
+	private List<Integer> bpc;
 
 	private static CommClient com;	// canal de comunicación del cliente (singleton)
 	private static Menu m; // ChoiceMenu del cliente.
@@ -20,28 +22,9 @@ public class Cliente {
 
 		// Se solicita por consola la posición del barco a colocar.
 		System.out.print("Introduzca las coordenadas del barco: ");
-		String coords = m.input().nextLine();
+		String coords = mo.input().nextLine();
 		
-		// Se crea el mensaje a enviar.
-		ProtocolMessages peticion = new ProtocolMessages("colocarBarco", coords);
-
-		// Se envía el mensaje aDPOl servidor.
-		com.sendEvent(peticion);
-		
-		// Esperar por la respuesta.
-		try {
-			ProtocolMessages respuesta = com.waitReply();
-			// Procesar respuesta.
-			Object psbexp = com.processReply(respuesta);
-		} catch (ClassNotFoundException | UnknownOperation e) {
-			System.err.printf("Recibido del servidor: %s\n",
-					e.getMessage());
-		} catch (IOException | ChannelException e) {
-			throw e;
-		} catch (Exception e) {
-			System.err.printf("%s: %s\n", e.getClass().getSimpleName(),
-					e.getMessage());
-		}
+		sendAndHandlePetition("colocarBarco", coords);
 		
 	} // colocarBarco
 
@@ -49,109 +32,130 @@ public class Cliente {
 	 * Método que limpia la salida.
 	 */
 	private static void limpiar() {
+		// TODO: fix, obviamente no funciona.
 		System.out.print("\033[H\033[2J");
 	}
 
 	/**
 	 * Método que devuelve la cantidad de barcos que quedan por colocar y
 	 * actualiza el ChoiceMenu de barcos por colocar.
-	 * @return la cantidad de barcos que quedan por colocar.
-	 * @throws Exception
+	 * @return La longitud del barco a colocar.
+	 */
+	private static int getBarcoAColocar() {
+		mo = new Menu("Barcos disponibles", "Seleccione un barco: ");
+	
+		// Obtener lista de barcos disponibles que faltan por colocar.
+		Object lista = sendAndHandlePetition("barcosPorColocar");
+		if(lista instanceof Exception) System.exit(1);
+		List<Integer> barcos = (List<Integer>) lista;
+		for(int longitudBarco : barcos) mo.add("Barco de tamaño " + longitudBarco, longitudBarco);
+		try {return mo.getInteger();} 
+		catch (NullPointerException npe) { // Si se escoge la opción 0, se sale del cliente sin errores.
+			disconnectProdecure(); 
+			return 0; // ← ESTO NO PUEDE PASAR! pero java es inútil.
+		} 
+	}
+
+	/**
+	 * Método que actualiza la lista de barcos por colocar.
+	 * @return Longitud de la lista.
 	 */
 	private static int barcosPorColocar() {
-		mo = new Menu("Barcos disponibles", "Seleccione un barco: ");
-			
-				// Obtener lista de barcos disponibles que faltan por colocar.
-				ProtocolMessages peticiónLista = new ProtocolMessages("barcosPorColocar");
+		Object lista = sendAndHandlePetition("barcosPorColocar");
+		if(lista instanceof Exception) System.exit(1);
+		return ((List<Integer>) lista).size();
+	}
 
-				// Enviar evento al servidor.
-				try {
-					com.sendEvent(peticiónLista);
-				} catch (IOException | ChannelException e) {
-					System.err.printf("%s: %s\n", e.getClass().getSimpleName(),
-							e.getMessage());
-				}
-				int length = 0;
-				try {
-					// Esperar respuesta.
-					ProtocolMessages respuesta = com.waitReply();
-					// Procesar respuesta.
-					List<Integer> resultado = (List<Integer>) com.processReply(respuesta);
-					// Mostrar lista de barcos disponibles.
-					for(int b : resultado) mo.add("Barco de tamaño " + b, b);
-					length = mo.getInteger();
-				} catch(Exception e) {
-					System.err.printf("Recibido del servidor: %s\n",
-							e.getMessage());
-				}
-				return length;
+	/**
+	 * Método que imprime el tablero de barcos mediante una petición al servidor.
+	 */
+	private static void mostrarBarcos(){
+		//limpiar();
+		System.out.println(sendAndHandlePetition("obtenerBarcos"));
+	}
+
+	/**
+	 * Método que a partir del nombre de una petición, la crea, espera por la respuesta
+	 * y la devuelve. Maneja cualquier excepción que pueda generar.
+	 * @param s El nombre de la petición.
+	 * @param args Los argumentos de la petición.
+	 * @return El objeto que devuelve el servidor. Puede ser {@code null}.
+	 */
+	private static Object sendAndHandlePetition(String petitionName, Object... args) {
+		ProtocolMessages petition;
+		if(args.length == 0) petition = new ProtocolMessages(petitionName);
+		else petition = new ProtocolMessages(petitionName, args);
+
+		try {com.sendEvent(petition);} 
+		catch (IOException | ChannelException ep) {printException(ep);}
+
+		try { // Las excepciones pueden ser de muchos tipos en este try/catch.
+			ProtocolMessages respuesta = com.waitReply();
+			return com.processReply(respuesta);
+		} catch (Exception e) {
+			printException(e);
+			return e;
+		}
+	}
+
+	/**
+	 * Método privado que imprime cualquier excepción que devuelva el servidor.
+	 * @param e Excepción a imprimir.
+	 */
+	private static void printException(Exception e) {
+		System.err.printf("%s (%s)%n", e.getClass().getSimpleName(), e.getMessage());
+	}
+
+	/**
+	 * Método que desconecta al cliente del servidor de manera correcta.
+	 * También cierra los menús creados.
+	 */
+	private static void disconnectProdecure() {
+		// 4. Cerrar la(s) interfaz(es).
+		m.close();
+		mo.close();
+
+		// 5. Desconectar al cliente.
+		com.disconnect();
+
+		// 6. Cerrar el cliente.
+		System.exit(0);
 	}
 	
     public static void main(String[] args) {
 
-		try { // 1. Crear el canal de comunicación
-			com = new CommClient();
-		} catch (IOException | ChannelException e) {
-			System.err.printf("%s: %s\n", e.getClass().getSimpleName(),
-					e.getMessage());
+		try {com = new CommClient();} // 1. Crear el canal de comunicación
+		catch (IOException | ChannelException e) {
+			printException(e);
 			System.exit(1);
 		}
 		
-		try { // 1.1. Activar el registro de mensajes del cliente
-			com.activateMessageLog();
-		} catch (ChannelException e) {
-			System.err.printf("%s: %s\n", e.getClass().getSimpleName(),
-					e.getMessage());
+		try {com.activateMessageLog();} // 1.1. Activar el registro de mensajes del cliente
+		catch (ChannelException e) {
+			printException(e);
 			System.exit(1);
 		}
 		
 		
 		try { // Colocar todos los barcos disponibles.
-			while(barcosPorColocar() != 0) colocarBarco(mo.getInteger());
-		} catch (ChannelException | IOException e1) {
-			e1.printStackTrace();
-		}
-		
-
+			while(barcosPorColocar() != 0) {
+				mostrarBarcos();
+				colocarBarco(getBarcoAColocar());
+			}
+		} catch (ChannelException | IOException e1) {e1.printStackTrace();}
 		
 		try {
 			// 2. Crear la interfaz
-			// crea el menú m
-	    	m = new Menu("\nBattleship", "Opción: ");
-	    	
-
+	    	m = new Menu("Battleship", "Opción: ");
+	    	m.add("debug");
 			// 3. Lanzar eventos mediante la interfaz
 			do {
-				// Imprimir el tablero.
-
-				ProtocolMessages tablero = new ProtocolMessages("obtenerBarcos");
-				com.sendEvent(tablero);
-
-				try {
-					ProtocolMessages respuesta = com.waitReply();
-					Object restablero = com.processReply(respuesta);
-					System.out.println(restablero);
-				} catch (ClassNotFoundException | UnknownOperation e) {
-					System.err.printf("Recibido del servidor: %s\n",
-							e.getMessage());
-				} catch (IOException | ChannelException e) {
-					throw e;
-				} catch (Exception e) {
-					System.err.printf("%s: %s\n", e.getClass().getSimpleName(),
-							e.getMessage());
-				}
+				mostrarBarcos();
 			} while (m.runSelection());
 		} catch (ChannelException | IOException e) {
-			System.err.printf("%s: %s\n", e.getClass().getSimpleName(),
-					e.getMessage());
+			printException(e);
 			System.exit(1);
-		} finally {
-			// 4. Cerrar la entrada de la interfaz
-			m.close();
-
-			// 5. Desconectar el cliente
-			com.disconnect();
-		}
+		} finally {disconnectProdecure();}
 		
 	} // main
 

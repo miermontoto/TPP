@@ -141,8 +141,10 @@ public class Servicio implements JuegoBarcos {
 	 * Si no se ha hecho blanco, se pierde el turno.
 	 * @param blanco {@code true} si el tiro ha alcanzado un barco
 	 * del oponente
+	 * @throws AccionNoPermitida si el jugador no tiene el turno
 	 */
-	private void actualizarEstado(boolean blanco) {
+	private void actualizarEstado(boolean blanco) throws AccionNoPermitida {
+		if(estado <= 2) throw new AccionNoPermitida("actualizarEstado");
 		this.estado = blanco && estado != 5 ? estado++ : 2;
 	}
 
@@ -159,8 +161,7 @@ public class Servicio implements JuegoBarcos {
 	}
 
 	@Override
-	public List<Integer> barcosPorColocar() throws AccionNoPermitida {
-		if(estado != 0) throw new AccionNoPermitida("barcosPorColocar");
+	public List<Integer> barcosPorColocar() {
 		return this.barcosRestantes;
 	}
 
