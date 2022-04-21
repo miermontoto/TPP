@@ -21,6 +21,8 @@ public class Servidor {
 				(o, x) -> ((Servicio)o).iniciarJuego());
 		com.addFunction("turno",
 				(o, x) -> ((Servicio)o).turno());
+		com.addFunction("tirar",
+				(o, x) -> ((Servicio)o).coordenadasTiro((String) x[0]));
 				
 	} // registrarOperaciones
 

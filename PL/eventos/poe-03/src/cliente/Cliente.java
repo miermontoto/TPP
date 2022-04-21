@@ -3,6 +3,7 @@ package cliente;
 import java.io.IOException;
 import java.util.List;
 
+import comun.JuegoBarcos;
 import lib.ChannelException;
 import lib.CommClient;
 import lib.Menu;
@@ -14,7 +15,7 @@ public class Cliente {
 	private static Menu m; // ChoiceMenu del cliente.
 	private static Menu mo; // ChoiceMenu de barcos por colocar.
 
-	private static void colocarBarco(int b) throws IOException, ChannelException {
+	private static void colocarBarco(int b) {
 
 		// Se solicita por consola la posición del barco a colocar.
 		System.out.print("Introduzca las coordenadas del barco: ");
@@ -23,6 +24,15 @@ public class Cliente {
 		sendAndHandlePetition("colocarBarco", coords);
 		
 	} // colocarBarco
+
+	private static void tirar() {
+		// Se solicita por consola la posición del tiro.
+		System.out.print("Introduzca las coordenadas del tiro: ");
+		String coords = m.input().nextLine();
+		
+		sendAndHandlePetition("tirar", coords);
+		
+	} // tirar
 
 	/**
 	 * Método que limpia la salida.
@@ -42,7 +52,7 @@ public class Cliente {
 	
 		// Obtener lista de barcos disponibles que faltan por colocar.
 		Object lista = sendAndHandlePetition("barcosPorColocar");
-		if(lista instanceof Exception) System.exit(1);
+		if(lista instanceof Exception) crashPrintException((Exception) lista);
 		List<Integer> barcos = (List<Integer>) lista;
 		for(int longitudBarco : barcos) mo.add("Barco de tamaño " + longitudBarco, longitudBarco);
 		try {return mo.getInteger();} 
@@ -58,16 +68,21 @@ public class Cliente {
 	 */
 	private static int barcosPorColocar() {
 		Object lista = sendAndHandlePetition("barcosPorColocar");
-		if(lista instanceof Exception) System.exit(1);
+		if(lista instanceof Exception) crashPrintException((Exception) lista);
 		return ((List<Integer>) lista).size();
 	}
 
 	/**
 	 * Método que imprime el tablero de barcos mediante una petición al servidor.
 	 */
-	private static void mostrarBarcos(){
-		//limpiar();
+	private static void mostrarBarcos() {
+		limpiar();
 		System.out.println(sendAndHandlePetition("obtenerBarcos"));
+	}
+
+	private static void mostrarTiros() {
+		limpiar();
+		System.out.println(sendAndHandlePetition("obtenerTiros"));
 	}
 
 	/**
@@ -117,40 +132,45 @@ public class Cliente {
 		// 6. Cerrar el cliente.
 		System.exit(0);
 	}
+
+	private static void crashPrintException(Exception e) {
+		printException(e);
+		System.exit(1);
+	}
 	
     public static void main(String[] args) {
 
 		try {com = new CommClient();} // 1. Crear el canal de comunicación
-		catch (IOException | ChannelException e) {
-			printException(e);
-			System.exit(1);
-		}
+		catch (IOException | ChannelException e) {crashPrintException(e);}
 		
 		try {com.activateMessageLog();} // 1.1. Activar el registro de mensajes del cliente
-		catch (ChannelException e) {
-			printException(e);
-			System.exit(1);
+		catch (ChannelException e) {crashPrintException(e);}
+		
+		
+		while(barcosPorColocar() != 0) { // colocar todos los barcos disponibles.
+			mostrarBarcos();
+			colocarBarco(getBarcoAColocar());
 		}
+
 		
-		
-		try { // Colocar todos los barcos disponibles.
-			while(barcosPorColocar() != 0) {
-				mostrarBarcos();
-				colocarBarco(getBarcoAColocar());
-			}
-		} catch (ChannelException | IOException e1) {e1.printStackTrace();}
+		sendAndHandlePetition("iniciarJuego"); // Iniciar la partida (buscar oponente).
+		// A partir de este punto, el cliente está en partida.
 		
 		try {
-			// 2. Crear la interfaz
-	    	m = new Menu("Battleship", "Opción: ");
-	    	m.add("debug");
-			// 3. Lanzar eventos mediante la interfaz
 			do {
-				mostrarBarcos();
+				Object temp = sendAndHandlePetition("turno");
+				if(temp instanceof Exception) crashPrintException((Exception) temp);
+				int turnStatus = (int) temp;
+				if(turnStatus == 0) { // Si el jugador no tiene el turno.
+					mostrarBarcos();
+					try {Thread.sleep(1500);} catch (InterruptedException ie) {printException(ie);}
+				} else if(turnStatus == 1) {
+					mostrarTiros();
+					tirar();
+				}
 			} while (m.runSelection());
 		} catch (ChannelException | IOException e) {
-			printException(e);
-			System.exit(1);
+			crashPrintException(e);
 		} finally {disconnectProdecure();}
 		
 	} // main

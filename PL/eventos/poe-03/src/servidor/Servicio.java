@@ -168,13 +168,7 @@ public class Servicio implements JuegoBarcos {
 	/**
 	 * Método que empareja a dos jugadores y comienza la partida.
 	 * El jugador que invoca a este método es el primero en jugar. <p>
-	 * <h3> Información de estados </h3>
-	 * <ul> <li> 0: ANP </li>
-	 * <li> 1: 1/2 </li>
-	 * <li> 2: ANP </li>	
-	 * <li> 3: ANP </li>
-	 * <li> 4: ANP </li>
-	 * <li> 5: ANP </li> </ul>
+	 * @throws AccionNoPermitida si se lanza desde otro estado que no sea el estado 1.
 	 */
 	@Override
 	public boolean iniciarJuego() throws AccionNoPermitida {
