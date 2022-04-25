@@ -5,5 +5,6 @@
             "componentes.jar",
             "/home/under/uo/y2t2/Paradigmas/PL/eventos/poe-01/POE_library.jar"
         ]
-    }
+    },
+    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms100m"
 }
