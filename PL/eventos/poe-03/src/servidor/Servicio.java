@@ -52,6 +52,7 @@ public class Servicio implements JuegoBarcos {
 	private Tablero oceano;						// tablero propio con los barcos
 	private Tablero tiros;						// tablero contrario, inicialmente en blanco
 	private int estado;							// estado del juego
+	private int idOponente;						// identificador del oponente
 
 	/**
 	 * Constructor de la clase.
@@ -145,7 +146,20 @@ public class Servicio implements JuegoBarcos {
 	 */
 	private void actualizarEstado(boolean blanco) throws AccionNoPermitida {
 		if(estado <= 2) throw new AccionNoPermitida("actualizarEstado");
+		
 		this.estado = blanco && estado != 5 ? estado++ : 2;
+
+		if(estado == 2) { // Si el jugador ha perdido el turno, es el turno del oponente.
+			turnoJugador.put(this.idClient, false);
+			turnoJugador.put(this.idOponente, true);
+		}
+		
+		// Si el oponente se queda sin barcos, se pasa al estado JuegoBarcos.FINAL_JUEGO.
+		if(blanco && barcosEnOceano.get(idOponente) == 0) {
+			this.estado = JuegoBarcos.FINAL_JUEGO;
+		}
+
+		System.out.printf("Nuevo estado -> %d%n", estado);
 	}
 
 	// Métodos de la interfaz JuegoBarcos
@@ -175,19 +189,28 @@ public class Servicio implements JuegoBarcos {
 		// Si no se está en el estado 1, no se puede iniciar el juego.
 		if (this.estado != 1) throw new AccionNoPermitida("iniciarJuego");
 
-		if(oponente.containsKey(idClient)) estado = 2;
+		if(oponente.containsKey(idClient)) {
+			estado = 2;
+			turnoJugador.put(idClient, false);
+		}
 		else {
 			if(jugadoresEnEspera.isEmpty()) jugadoresEnEspera.add(idClient);
 			else {
 				// Si solo está el cliente en la lista de espera, devolver falso.
-				if(jugadoresEnEspera.size() == 1 && jugadoresEnEspera.contains(idClient)) return false;
+				if(jugadoresEnEspera.contains(idClient)) {
+					if(jugadoresEnEspera.size() == 1) {
+						return false;
+					}
+
+					jugadoresEnEspera.remove((Object) idClient);
+				}
 
 				// Si hay dos o más clientes en la lista de espera, se inicia el juego.
-				jugadoresEnEspera.remove(idClient); // Se elimina al propio jugador de la lista de espera.
-				int idOponente = jugadoresEnEspera.remove(0); // Se obtiene el ID del oponente.
+				idOponente = jugadoresEnEspera.remove(0); // Se obtiene el ID del oponente.
 				oponente.put(idClient, idOponente); // Se establecen las relaciones entre los clientes.
 				oponente.put(idOponente, idClient);
 				estado = 2; // Se cambia el estado.
+				turnoJugador.put(idClient, true); // Se establece el turno del cliente.
 			}
 		}
 		return estado == 2;
@@ -205,7 +228,7 @@ public class Servicio implements JuegoBarcos {
 			if(this.estado == 2) this.estado = 3;
 			return 1;
 		} else {
-			if(turnoJugador.get(oponente.get(idClient))) return 0;
+			if(turnoJugador.get(idOponente)) return 0;
 			else return JuegoBarcos.FINAL_JUEGO;
 		}
 	}
@@ -213,27 +236,44 @@ public class Servicio implements JuegoBarcos {
 	@Override
 	public String coordenadasTiro(String tiro) throws AccionNoPermitida, CoordenadasNoValidas {
 		if(this.estado < 3) throw new AccionNoPermitida("coordenadasTiro");
-		if(tiro == null || tiro.isEmpty() || !tiro.matches(PATTERN_COORD)) {
-			throw new CoordenadasNoValidas(
-					String.format("Patrón de coordenadas: %s", PATTERN_COORD));
-		}
 
 		Pair<Integer, Integer> p = position(tiro);
 
-		Celda res = oceanoJugadores.get(oponente.get(idClient)).tiro(p.first(), p.second());
+		Celda res = oceanoJugadores.get(idOponente).tiro(p.first(), p.second());
 		boolean check = false;
 		String newStatus = "Agua";
-		if(res == Barco.TOCADO) {check = true; return "Tocado";}
-		if(res.esBarco()) {check = true; return "Hundido";}
+		if(res == Barco.TOCADO) {
+			check = true; 
+			newStatus = "Tocado";
+		}
+		if(res.esBarco()) {
+			check = true;
+			newStatus = "Hundido";
+			barcosEnOceano.put(idOponente, barcosEnOceano.get(idOponente) - 1);
+			tiros.registrarBarco((Barco) res);
+		}
 		actualizarEstado(check);
 		tiros.tabla[p.first()][p.second()] = res;
-		if(newStatus.equals("Hundido")) tiros.registrarBarco((Barco) res);
 		return newStatus;
 	}
 
 	@Override
 	public int numBarcosEnOceano() {
 		return barcosEnOceano.get(this.idClient);
+	}
+
+	/**
+	 * Método que cierra la partida y elimina toda la infmormación
+	 * referida a él de las estructuras de datos.
+	 */
+	@Override
+	public void close() {
+		JuegoBarcos.super.close();
+
+		oponente.remove((Object) idClient);
+		oceanoJugadores.remove((Object) idClient);
+		barcosRestantes.remove((Object) idClient);
+		turnoJugador.remove((Object) idClient);
 	}
 
 }

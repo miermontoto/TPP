@@ -28,7 +28,7 @@ public class Cliente {
 	private static void tirar() {
 		// Se solicita por consola la posición del tiro.
 		System.out.print("Introduzca las coordenadas del tiro: ");
-		String coords = m.input().nextLine();
+		String coords = mo.input().nextLine();
 		
 		sendAndHandlePetition("tirar", coords);
 		
@@ -38,8 +38,10 @@ public class Cliente {
 	 * Método que limpia la salida.
 	 */
 	private static void limpiar() {
-		System.out.print("\033[H\033[2J");
-		System.out.flush();
+		try {
+			Runtime.getRuntime().exec("clear");
+			System.out.flush();
+		} catch(IOException e) {System.err.println("No se pudo limpiar la pantalla");}
 	}
 
 	/**
@@ -115,6 +117,7 @@ public class Cliente {
 	 */
 	private static void printException(Exception e) {
 		System.err.printf("%s (%s)%n", e.getClass().getSimpleName(), e.getMessage());
+		e.printStackTrace();
 	}
 
 	/**
@@ -122,15 +125,12 @@ public class Cliente {
 	 * También cierra los menús creados.
 	 */
 	private static void disconnectProdecure() {
-		// 4. Cerrar la(s) interfaz(es).
-		m.close();
-		mo.close();
+		// Cerrar interfaces.
+		if(m != null) m.close();
+		if(mo != null) mo.close();
 
-		// 5. Desconectar al cliente.
-		com.disconnect();
-
-		// 6. Cerrar el cliente.
-		System.exit(0);
+		com.disconnect(); // Desconectar al cliente.
+		System.exit(0); // Cerrar la aplicación.
 	}
 
 	private static void crashPrintException(Exception e) {
@@ -152,26 +152,31 @@ public class Cliente {
 			colocarBarco(getBarcoAColocar());
 		}
 
+		mostrarBarcos();
+		System.out.print("Buscando oponente... ");
+		while(!sendAndHandlePetition("iniciarJuego").equals(true)) {
+			try {Thread.sleep(2500);}
+			catch(InterruptedException e) {crashPrintException(e);}
+		}
+		System.out.println("Encontrado.");
 		
-		sendAndHandlePetition("iniciarJuego"); // Iniciar la partida (buscar oponente).
-		// A partir de este punto, el cliente está en partida.
 		
-		try {
-			do {
-				Object temp = sendAndHandlePetition("turno");
-				if(temp instanceof Exception) crashPrintException((Exception) temp);
-				int turnStatus = (int) temp;
-				if(turnStatus == 0) { // Si el jugador no tiene el turno.
-					mostrarBarcos();
-					try {Thread.sleep(1500);} catch (InterruptedException ie) {printException(ie);}
-				} else if(turnStatus == 1) {
-					mostrarTiros();
-					tirar();
-				}
-			} while (m.runSelection());
-		} catch (ChannelException | IOException e) {
-			crashPrintException(e);
-		} finally {disconnectProdecure();}
+		for(;;) {
+			Object temp = sendAndHandlePetition("turno");
+			if(temp instanceof Exception) crashPrintException((Exception) temp);
+			int turnStatus = (int) temp;
+			if(turnStatus == 0) { // Si el jugador no tiene el turno.
+				mostrarBarcos();
+				try {Thread.sleep(1500);} catch (InterruptedException ie) {printException(ie);}
+			} else if(turnStatus == 1) {
+				mostrarTiros();
+				tirar();
+			} else {
+				System.out.println("Partida finalizada.");
+				disconnectProdecure();
+			}
+		}
+		
 		
 	} // main
 
