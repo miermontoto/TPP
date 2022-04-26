@@ -3,7 +3,6 @@ package cliente;
 import java.io.IOException;
 import java.util.List;
 
-import comun.JuegoBarcos;
 import lib.ChannelException;
 import lib.CommClient;
 import lib.Menu;
@@ -12,15 +11,18 @@ import lib.ProtocolMessages;
 public class Cliente {
 
 	private static CommClient com;	// canal de comunicación del cliente (singleton)
-	private static Menu m; // ChoiceMenu del cliente.
-	private static Menu mo; // ChoiceMenu de barcos por colocar.
+	private static Menu m = new Menu("private", "test"); // ChoiceMenu del cliente.
 
-	private static void colocarBarco(int b) {
+	private static void colocarBarco() {
+		// Se imprime la longitud de los barcos que quedan por colocar.
+		List<Integer> lista = (List<Integer>) sendAndHandlePetition("barcosPorColocar");
+		System.out.println("Barcos por colocar:");
+		for(int c : lista) System.out.println("- Barco de longitud " + c);
 
 		// Se solicita por consola la posición del barco a colocar.
-		System.out.print("Introduzca las coordenadas del barco: ");
-		String coords = mo.input().nextLine();
-		
+		System.out.print("Introduzca las coordenadas de un barco ('exit' para salir): ");
+		String coords = m.input().nextLine();
+		if(coords.equals("exit")) disconnectProcedure();
 		sendAndHandlePetition("colocarBarco", coords);
 		
 	} // colocarBarco
@@ -45,26 +47,6 @@ public class Cliente {
 	}
 
 	/**
-	 * Método que devuelve la cantidad de barcos que quedan por colocar y
-	 * actualiza el ChoiceMenu de barcos por colocar.
-	 * @return La longitud del barco a colocar.
-	 */
-	private static int getBarcoAColocar() {
-		mo = new Menu("Barcos disponibles", "Seleccione un barco: ");
-	
-		// Obtener lista de barcos disponibles que faltan por colocar.
-		Object lista = sendAndHandlePetition("barcosPorColocar");
-		if(lista instanceof Exception) crashPrintException((Exception) lista);
-		List<Integer> barcos = (List<Integer>) lista;
-		for(int longitudBarco : barcos) mo.add("Barco de tamaño " + longitudBarco, longitudBarco);
-		try {return mo.getInteger();} 
-		catch (NullPointerException npe) { // Si se escoge la opción 0, se sale del cliente sin errores.
-			disconnectProdecure(); 
-			return 0; // ← ESTO NO PUEDE PASAR! pero java es inútil.
-		} 
-	}
-
-	/**
 	 * Método que actualiza la lista de barcos por colocar.
 	 * @return Longitud de la lista.
 	 */
@@ -75,16 +57,11 @@ public class Cliente {
 	}
 
 	/**
-	 * Método que imprime el tablero de barcos mediante una petición al servidor.
+	 * Método que imprime lo que devuelva la petición introducida.
 	 */
-	private static void mostrarBarcos() {
+	private static void printPetition(String petitionName) {
 		limpiar();
-		System.out.println(sendAndHandlePetition("obtenerBarcos"));
-	}
-
-	private static void mostrarTiros() {
-		limpiar();
-		System.out.println(sendAndHandlePetition("obtenerTiros"));
+		System.out.println(sendAndHandlePetition(petitionName));
 	}
 
 	/**
@@ -124,10 +101,8 @@ public class Cliente {
 	 * Método que desconecta al cliente del servidor de manera correcta.
 	 * También cierra los menús creados.
 	 */
-	private static void disconnectProdecure() {
-		// Cerrar interfaces.
-		if(m != null) m.close();
-		if(mo != null) mo.close();
+	private static void disconnectProcedure() {
+		m.close(); // Cerrar interfaz.
 
 		com.disconnect(); // Desconectar al cliente.
 		System.exit(0); // Cerrar la aplicación.
@@ -149,7 +124,7 @@ public class Cliente {
 		
 		while(barcosPorColocar() != 0) { // colocar todos los barcos disponibles.
 			mostrarBarcos();
-			colocarBarco(getBarcoAColocar());
+			colocarBarco();
 		}
 
 		mostrarBarcos();
@@ -166,14 +141,14 @@ public class Cliente {
 			if(temp instanceof Exception) crashPrintException((Exception) temp);
 			int turnStatus = (int) temp;
 			if(turnStatus == 0) { // Si el jugador no tiene el turno.
-				mostrarBarcos();
+				printPetition("obtenerBarcos");
 				try {Thread.sleep(1500);} catch (InterruptedException ie) {printException(ie);}
 			} else if(turnStatus == 1) {
-				mostrarTiros();
+				printPetition("obtenerTiros");
 				tirar();
 			} else {
 				System.out.println("Partida finalizada.");
-				disconnectProdecure();
+				disconnectProcedure();
 			}
 		}
 		

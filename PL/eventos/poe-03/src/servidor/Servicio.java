@@ -189,10 +189,7 @@ public class Servicio implements JuegoBarcos {
 		// Si no se está en el estado 1, no se puede iniciar el juego.
 		if (this.estado != 1) throw new AccionNoPermitida("iniciarJuego");
 
-		if(oponente.containsKey(idClient)) {
-			estado = 2;
-			turnoJugador.put(idClient, false);
-		}
+		if(oponente.containsKey(idClient)) estado = 2;
 		else {
 			if(jugadoresEnEspera.isEmpty()) jugadoresEnEspera.add(idClient);
 			else {
@@ -211,6 +208,7 @@ public class Servicio implements JuegoBarcos {
 				oponente.put(idOponente, idClient);
 				estado = 2; // Se cambia el estado.
 				turnoJugador.put(idClient, true); // Se establece el turno del cliente.
+				turnoJugador.put(idOponente, false); // El oponente no tendrá el turno.
 			}
 		}
 		return estado == 2;
