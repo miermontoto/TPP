@@ -86,10 +86,26 @@ public class Calculadora {
 
     public void borrarMem() {
         out.print("borrarMem(): ");
-        if(estado == ) {
+        if(estado == 3) {
             estado = 1;
-            memoria = 0;
             out.println(memoria);
+        } else err.println("ANP");
+    }
+
+    public void memorizar() {
+        out.println("memorizar(): ");
+        if(estado == 0 || estado == 1) estado = estado == 0 ? 3 : 2;
+        memoria = valor;
+        out.println(memoria);
+    }
+
+    public void recuperar() {
+        out.println("recuperar(): ");
+        if(estado == 2 || estado == 3) {
+            if(estado == 2) operador = ' ';
+            numero(memoria);
+            estado = 2;
+            out.println(valor);
         } else err.println("ANP");
     }
 
