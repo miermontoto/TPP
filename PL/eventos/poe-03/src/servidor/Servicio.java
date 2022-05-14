@@ -183,14 +183,17 @@ public class Servicio implements JuegoBarcos {
 	 * Método que empareja a dos jugadores y comienza la partida.
 	 * El jugador que invoca a este método es el primero en jugar. <p>
 	 * @throws AccionNoPermitida si se lanza desde otro estado que no sea el estado 1.
+	 * @return {@code true} si se ha emparejado a dos jugadores, {@code false} en caso contrario.
 	 */
 	@Override
 	public boolean iniciarJuego() throws AccionNoPermitida {
 		// Si no se está en el estado 1, no se puede iniciar el juego.
 		if (this.estado != 1) throw new AccionNoPermitida("iniciarJuego");
 
-		if(oponente.containsKey(idClient)) estado = 2;
-		else {
+		if(oponente.containsKey(idClient)) {
+			estado = 2;
+			idOponente = oponente.get(idClient);
+		} else {
 			if(jugadoresEnEspera.isEmpty()) jugadoresEnEspera.add(idClient);
 			else {
 				// Si solo está el cliente en la lista de espera, devolver falso.
@@ -262,16 +265,31 @@ public class Servicio implements JuegoBarcos {
 
 	/**
 	 * Método que cierra la partida y elimina toda la infmormación
-	 * referida a él de las estructuras de datos.
+	 * referida a él de las estructuras de datos. <p>
+	 * Implementación dada por el profesor.
 	 */
 	@Override
 	public void close() {
-		JuegoBarcos.super.close();
+		if (this.estado < 2) { // desconexión sin haber comenzado la partida
+			jugadoresEnEspera.remove((Integer)this.idClient);
+		}
 
-		oponente.remove((Object) idClient);
-		oceanoJugadores.remove((Object) idClient);
-		barcosRestantes.remove((Object) idClient);
-		turnoJugador.remove((Object) idClient);
+		if (oponente.get(idOponente) != null) { // el oponente sigue conectado
+			turnoJugador.put(oponente.get(idOponente), true);
+		} else { // el oponente está desconectado
+			// eliminar las información compartida de ambos contrincantes
+			oceanoJugadores.remove(this.idClient);
+			oceanoJugadores.remove(idOponente);
+			barcosEnOceano.remove(this.idClient);
+			barcosEnOceano.remove(idOponente);
+			turnoJugador.remove(this.idClient);
+			turnoJugador.remove(idOponente);
+		}
+			
+		// este OOS ya no necesita saber quien es su oponente
+		oponente.remove(this.idClient);
+
+		JuegoBarcos.super.close();
 	}
 
 }

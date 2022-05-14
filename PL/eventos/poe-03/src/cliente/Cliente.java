@@ -30,8 +30,8 @@ public class Cliente {
 	private static void tirar() {
 		// Se solicita por consola la posición del tiro.
 		System.out.print("Introduzca las coordenadas del tiro: ");
-		String coords = mo.input().nextLine();
-		
+		String coords = m.input().nextLine();
+		if(coords.equals("exit")) disconnectProcedure();
 		sendAndHandlePetition("tirar", coords);
 		
 	} // tirar
@@ -123,11 +123,11 @@ public class Cliente {
 		
 		
 		while(barcosPorColocar() != 0) { // colocar todos los barcos disponibles.
-			mostrarBarcos();
+			printPetition("obtenerBarcos");
 			colocarBarco();
 		}
 
-		mostrarBarcos();
+		printPetition("obtenerBarcos");
 		System.out.print("Buscando oponente... ");
 		while(!sendAndHandlePetition("iniciarJuego").equals(true)) {
 			try {Thread.sleep(2500);}
@@ -136,13 +136,13 @@ public class Cliente {
 		System.out.println("Encontrado.");
 		
 		
-		for(;;) {
+		for(;;) { // <- esto rompe algún paradigma de la programación :')
 			Object temp = sendAndHandlePetition("turno");
 			if(temp instanceof Exception) crashPrintException((Exception) temp);
 			int turnStatus = (int) temp;
 			if(turnStatus == 0) { // Si el jugador no tiene el turno.
 				printPetition("obtenerBarcos");
-				try {Thread.sleep(1500);} catch (InterruptedException ie) {printException(ie);}
+				try {Thread.sleep(1500);} catch (InterruptedException ie) {crashPrintException(ie);}
 			} else if(turnStatus == 1) {
 				printPetition("obtenerTiros");
 				tirar();
